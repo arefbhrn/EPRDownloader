@@ -52,7 +52,7 @@ EPRDownloader.initialize(getApplicationContext(), config);
 
 ### Make a download request
 ```java
-DownloadRequest download = EPRDownloader.download("", "/", "").build()
+DownloadRequest download = EPRDownloader.download(ur, folderName + "/", fileName).build()
         .setOnStartOrResumeListener(new OnStartOrResumeListener() {
             @Override
             public void onStartOrResume() {
