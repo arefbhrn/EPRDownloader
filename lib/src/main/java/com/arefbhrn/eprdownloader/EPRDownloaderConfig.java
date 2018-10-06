@@ -23,7 +23,7 @@ import com.arefbhrn.eprdownloader.httpclient.HttpClient;
  * Created by amitshekhar on 13/11/17.
  */
 
-public class PRDownloaderConfig {
+public class EPRDownloaderConfig {
 
     private int readTimeout;
     private int connectTimeout;
@@ -31,7 +31,7 @@ public class PRDownloaderConfig {
     private HttpClient httpClient;
     private boolean databaseEnabled;
 
-    private PRDownloaderConfig(Builder builder) {
+    private EPRDownloaderConfig(Builder builder) {
         this.readTimeout = builder.readTimeout;
         this.connectTimeout = builder.connectTimeout;
         this.userAgent = builder.userAgent;
@@ -116,8 +116,8 @@ public class PRDownloaderConfig {
             return this;
         }
 
-        public PRDownloaderConfig build() {
-            return new PRDownloaderConfig(this);
+        public EPRDownloaderConfig build() {
+            return new EPRDownloaderConfig(this);
         }
     }
 }

@@ -29,34 +29,34 @@ import com.arefbhrn.eprdownloader.request.DownloadRequestBuilder;
 import com.arefbhrn.eprdownloader.utils.Utils;
 
 /**
- * PRDownloader entry point.
+ * EPRDownloader entry point.
  * You must initialize this class before use. The simplest way is to just do
- * {#code PRDownloader.initialize(context)}.
+ * {#code EPRDownloader.initialize(context)}.
  */
-public class PRDownloader {
+public class EPRDownloader {
 
     /**
      * private constructor to prevent instantiation of this class
      */
-    private PRDownloader() {
+    private EPRDownloader() {
     }
 
     /**
-     * Initializes PRDownloader with the default config.
+     * Initializes EPRDownloader with the default config.
      *
      * @param context The context
      */
     public static void initialize(Context context) {
-        initialize(context, PRDownloaderConfig.newBuilder().build());
+        initialize(context, EPRDownloaderConfig.newBuilder().build());
     }
 
     /**
-     * Initializes PRDownloader with the custom config.
+     * Initializes EPRDownloader with the custom config.
      *
      * @param context The context
-     * @param config  The PRDownloaderConfig
+     * @param config  The EPRDownloaderConfig
      */
-    public static void initialize(Context context, PRDownloaderConfig config) {
+    public static void initialize(Context context, EPRDownloaderConfig config) {
         ComponentHolder.getInstance().init(context, config);
         DownloadRequestQueue.initialize();
     }
@@ -136,7 +136,7 @@ public class PRDownloader {
     }
 
     /**
-     * Shuts PRDownloader down
+     * Shuts EPRDownloader down
      */
     public static void shutDown() {
         Core.shutDown();

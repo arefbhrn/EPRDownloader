@@ -26,7 +26,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'com.mindorks.android:prdownloader:0.4.0'
 }
 
 install {
@@ -44,8 +43,8 @@ install {
 
             licenses {
                 license {
-                    name 'The MIT License (MIT)'
-                    url 'https://opensource.org/licenses/MIT'
+                    name 'The Apache License 2.0'
+                    url 'https://opensource.org/licenses/Apache-2.0'
                 }
             }
             scm {

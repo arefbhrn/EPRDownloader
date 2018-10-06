@@ -19,8 +19,8 @@ package com.arefbhrn.eprdownloader.internal;
 import android.content.Context;
 
 import com.arefbhrn.eprdownloader.Constants;
-import com.arefbhrn.eprdownloader.PRDownloader;
-import com.arefbhrn.eprdownloader.PRDownloaderConfig;
+import com.arefbhrn.eprdownloader.EPRDownloader;
+import com.arefbhrn.eprdownloader.EPRDownloaderConfig;
 import com.arefbhrn.eprdownloader.database.AppDbHelper;
 import com.arefbhrn.eprdownloader.database.DbHelper;
 import com.arefbhrn.eprdownloader.database.NoOpsDbHelper;
@@ -44,14 +44,14 @@ public class ComponentHolder {
         return INSTANCE;
     }
 
-    public void init(Context context, PRDownloaderConfig config) {
+    public void init(Context context, EPRDownloaderConfig config) {
         this.readTimeout = config.getReadTimeout();
         this.connectTimeout = config.getConnectTimeout();
         this.userAgent = config.getUserAgent();
         this.httpClient = config.getHttpClient();
         this.dbHelper = config.isDatabaseEnabled() ? new AppDbHelper(context) : new NoOpsDbHelper();
         if (config.isDatabaseEnabled()) {
-            PRDownloader.cleanUp(30);
+            EPRDownloader.cleanUp(30);
         }
     }
 
