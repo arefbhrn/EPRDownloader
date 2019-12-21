@@ -24,7 +24,7 @@
 
 Add this in your build.gradle
 ```groovy
-implementation 'com.github.arefbhrn:EPRDownloader:1.0.0'
+implementation 'com.github.arefbhrn:EPRDownloader:1.0.1'
 ```
 Do not forget to add internet permission in manifest if already not present
 ```xml
@@ -53,31 +53,31 @@ EPRDownloader.initialize(getApplicationContext(), config);
 ### Make a download request
 ```java
 DownloadRequest download = EPRDownloader.download(ur, folderName + "/", fileName).build()
-        .setOnStartOrResumeListener(new OnStartOrResumeListener() {
+        .addOnStartOrResumeListener(new OnStartOrResumeListener() {
             @Override
             public void onStartOrResume() {
 
             }
         })
-        .setOnPauseListener(new OnPauseListener() {
+        .addOnPauseListener(new OnPauseListener() {
             @Override
             public void onPause() {
 
             }
         })
-        .setOnCancelListener(new OnCancelListener() {
+        .addOnCancelListener(new OnCancelListener() {
             @Override
             public void onCancel() {
 
             }
         })
-        .setOnProgressListener(new OnProgressListener() {
+        .addOnProgressListener(new OnProgressListener() {
             @Override
             public void onProgress(Progress progress) {
 
             }
         })
-        .setOnDownloadListener(new OnDownloadListener() {
+        .addOnDownloadListener(new OnDownloadListener() {
             @Override
             public void onDownloadComplete() {
 
