@@ -83,6 +83,7 @@ public class DownloadTask {
 
         try {
 
+            progressHandlers.clear();
             for (final OnProgressListener onProgressListener : request.getOnProgressListeners()) {
                 if (onProgressListener != null) {
                     progressHandlers.add(new ProgressHandler(onProgressListener));
