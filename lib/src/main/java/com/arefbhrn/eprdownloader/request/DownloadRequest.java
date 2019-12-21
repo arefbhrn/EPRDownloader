@@ -31,13 +31,14 @@ import com.arefbhrn.eprdownloader.internal.DownloadRequestQueue;
 import com.arefbhrn.eprdownloader.internal.SynchronousCall;
 import com.arefbhrn.eprdownloader.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Future;
 
 /**
  * Created by amitshekhar on 13/11/17.
- * Updated by "Aref Bahreini Nejad" on 06/10/2018
+ * Updated by "Aref Bahreini Nejad" on 21/12/2019
  */
 
 public class DownloadRequest {
@@ -54,11 +55,11 @@ public class DownloadRequest {
     private int readTimeout;
     private int connectTimeout;
     private String userAgent;
-    private OnProgressListener onProgressListener;
-    private OnDownloadListener onDownloadListener;
-    private OnStartOrResumeListener onStartOrResumeListener;
-    private OnPauseListener onPauseListener;
-    private OnCancelListener onCancelListener;
+    private ArrayList<OnProgressListener> onProgressListeners = new ArrayList<>();
+    private ArrayList<OnDownloadListener> onDownloadListeners = new ArrayList<>();
+    private ArrayList<OnStartOrResumeListener> onStartOrResumeListeners = new ArrayList<>();
+    private ArrayList<OnPauseListener> onPauseListeners = new ArrayList<>();
+    private ArrayList<OnCancelListener> onCancelListeners = new ArrayList<>();
     private int downloadId = -1;
     private HashMap<String, List<String>> headerMap;
     private Status status;
@@ -190,6 +191,10 @@ public class DownloadRequest {
         return downloadId;
     }
 
+    public void setDownloadId(int downloadId) {
+        this.downloadId = downloadId;
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -198,32 +203,32 @@ public class DownloadRequest {
         this.status = status;
     }
 
-    public OnProgressListener getOnProgressListener() {
-        return onProgressListener;
+    public ArrayList<OnProgressListener> getOnProgressListeners() {
+        return onProgressListeners;
     }
 
-    public DownloadRequest setOnDownloadListener(OnDownloadListener onDownloadListener) {
-        this.onDownloadListener = onDownloadListener;
+    public DownloadRequest addOnDownloadListener(OnDownloadListener onDownloadListener) {
+        this.onDownloadListeners.add(onDownloadListener);
         return this;
     }
 
-    public DownloadRequest setOnStartOrResumeListener(OnStartOrResumeListener onStartOrResumeListener) {
-        this.onStartOrResumeListener = onStartOrResumeListener;
+    public DownloadRequest addOnStartOrResumeListener(OnStartOrResumeListener onStartOrResumeListeners) {
+        this.onStartOrResumeListeners.add(onStartOrResumeListeners);
         return this;
     }
 
-    public DownloadRequest setOnProgressListener(OnProgressListener onProgressListener) {
-        this.onProgressListener = onProgressListener;
+    public DownloadRequest addOnProgressListener(OnProgressListener onProgressListeners) {
+        this.onProgressListeners.add(onProgressListeners);
         return this;
     }
 
-    public DownloadRequest setOnPauseListener(OnPauseListener onPauseListener) {
-        this.onPauseListener = onPauseListener;
+    public DownloadRequest addOnPauseListener(OnPauseListener onPauseListeners) {
+        this.onPauseListeners.add(onPauseListeners);
         return this;
     }
 
-    public DownloadRequest setOnCancelListener(OnCancelListener onCancelListener) {
-        this.onCancelListener = onCancelListener;
+    public DownloadRequest addOnCancelListener(OnCancelListener onCancelListeners) {
+        this.onCancelListeners.add(onCancelListeners);
         return this;
     }
 
@@ -238,68 +243,79 @@ public class DownloadRequest {
 
     public void deliverError(final Error error) {
         if (status != Status.CANCELLED) {
-            Core.getInstance().getExecutorSupplier().forMainThreadTasks()
-                    .execute(new Runnable() {
-                        public void run() {
-                            if (onDownloadListener != null) {
-                                onDownloadListener.onError(error);
+            setStatus(Status.FAILED);
+            for (final OnDownloadListener onDownloadListener : onDownloadListeners) {
+                Core.getInstance().getExecutorSupplier().forMainThreadTasks()
+                        .execute(new Runnable() {
+                            public void run() {
+                                if (onDownloadListener != null) {
+                                    onDownloadListener.onError(error);
+                                }
                             }
-                            finish();
-                        }
-                    });
+                        });
+            }
+            finish();
         }
     }
 
     public void deliverSuccess() {
         if (status != Status.CANCELLED) {
             setStatus(Status.COMPLETED);
-            Core.getInstance().getExecutorSupplier().forMainThreadTasks()
-                    .execute(new Runnable() {
-                        public void run() {
-                            if (onDownloadListener != null) {
-                                onDownloadListener.onDownloadComplete();
+            for (final OnDownloadListener onDownloadListener : onDownloadListeners) {
+                Core.getInstance().getExecutorSupplier().forMainThreadTasks()
+                        .execute(new Runnable() {
+                            public void run() {
+                                if (onDownloadListener != null) {
+                                    onDownloadListener.onDownloadComplete();
+                                }
                             }
-                            finish();
-                        }
-                    });
+                        });
+            }
+            finish();
         }
     }
 
     public void deliverStartEvent() {
         if (status != Status.CANCELLED) {
-            Core.getInstance().getExecutorSupplier().forMainThreadTasks()
-                    .execute(new Runnable() {
-                        public void run() {
-                            if (onStartOrResumeListener != null) {
-                                onStartOrResumeListener.onStartOrResume();
+            for (final OnStartOrResumeListener onStartOrResumeListener : onStartOrResumeListeners) {
+                Core.getInstance().getExecutorSupplier().forMainThreadTasks()
+                        .execute(new Runnable() {
+                            public void run() {
+                                if (onStartOrResumeListener != null) {
+                                    onStartOrResumeListener.onStartOrResume();
+                                }
                             }
-                        }
-                    });
+                        });
+            }
         }
     }
 
     public void deliverPauseEvent() {
         if (status != Status.CANCELLED) {
-            Core.getInstance().getExecutorSupplier().forMainThreadTasks()
-                    .execute(new Runnable() {
-                        public void run() {
-                            if (onPauseListener != null) {
-                                onPauseListener.onPause();
+            for (final OnPauseListener onPauseListener : onPauseListeners) {
+                Core.getInstance().getExecutorSupplier().forMainThreadTasks()
+                        .execute(new Runnable() {
+                            public void run() {
+                                if (onPauseListener != null) {
+                                    onPauseListener.onPause();
+                                }
                             }
-                        }
-                    });
+                        });
+            }
         }
     }
 
     private void deliverCancelEvent() {
-        Core.getInstance().getExecutorSupplier().forMainThreadTasks()
-                .execute(new Runnable() {
-                    public void run() {
-                        if (onCancelListener != null) {
-                            onCancelListener.onCancel();
+        for (final OnCancelListener onCancelListener : onCancelListeners) {
+            Core.getInstance().getExecutorSupplier().forMainThreadTasks()
+                    .execute(new Runnable() {
+                        public void run() {
+                            if (onCancelListener != null) {
+                                onCancelListener.onCancel();
+                            }
                         }
-                    }
-                });
+                    });
+        }
     }
 
     public void cancel() {
@@ -317,11 +333,11 @@ public class DownloadRequest {
     }
 
     private void destroy() {
-        this.onProgressListener = null;
-        this.onDownloadListener = null;
-        this.onStartOrResumeListener = null;
-        this.onPauseListener = null;
-        this.onCancelListener = null;
+        this.onProgressListeners.clear();
+        this.onDownloadListeners.clear();
+        this.onStartOrResumeListeners.clear();
+        this.onPauseListeners.clear();
+        this.onCancelListeners.clear();
     }
 
     private int getReadTimeoutFromConfig() {

@@ -18,7 +18,7 @@ package com.arefbhrn.eprdownloader;
 
 /**
  * Created by amitshekhar on 13/11/17.
- * Updated by "Aref Bahreini Nejad" on 06/10/2018
+ * Updated by "Aref Bahreini Nejad" on 21/12/2019
  */
 
 public final class Constants {

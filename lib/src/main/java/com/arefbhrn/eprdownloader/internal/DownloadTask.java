@@ -18,28 +18,28 @@ package com.arefbhrn.eprdownloader.internal;
 
 import com.arefbhrn.eprdownloader.Constants;
 import com.arefbhrn.eprdownloader.Error;
+import com.arefbhrn.eprdownloader.OnProgressListener;
 import com.arefbhrn.eprdownloader.Progress;
 import com.arefbhrn.eprdownloader.Response;
 import com.arefbhrn.eprdownloader.Status;
 import com.arefbhrn.eprdownloader.database.DownloadModel;
 import com.arefbhrn.eprdownloader.handler.ProgressHandler;
 import com.arefbhrn.eprdownloader.httpclient.HttpClient;
+import com.arefbhrn.eprdownloader.internal.stream.FileDownloadOutputStream;
+import com.arefbhrn.eprdownloader.internal.stream.FileDownloadRandomAccessFile;
 import com.arefbhrn.eprdownloader.request.DownloadRequest;
 import com.arefbhrn.eprdownloader.utils.Utils;
 
-import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.io.SyncFailedException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 
 /**
  * Created by amitshekhar on 13/11/17.
- * Updated by "Aref Bahreini Nejad" on 06/10/2018
+ * Updated by "Aref Bahreini Nejad" on 21/12/2019
  */
 
 public class DownloadTask {
@@ -48,9 +48,11 @@ public class DownloadTask {
     private static final long TIME_GAP_FOR_SYNC = 2000;
     private static final long MIN_BYTES_FOR_SYNC = 65536;
     private final DownloadRequest request;
+    private ProgressHandler progressHandler;
     private long lastSyncTime;
     private long lastSyncBytes;
     private InputStream inputStream;
+    private FileDownloadOutputStream outputStream;
     private HttpClient httpClient;
     private long totalBytes;
     private int responseCode;
@@ -78,11 +80,13 @@ public class DownloadTask {
             return response;
         }
 
-        BufferedOutputStream outputStream = null;
-
-        FileDescriptor fileDescriptor = null;
-
         try {
+
+            for (final OnProgressListener onProgressListener : request.getOnProgressListeners()) {
+                if (onProgressListener != null) {
+                    progressHandler = new ProgressHandler(onProgressListener);
+                }
+            }
 
             tempPath = Utils.getTempPath(request.getDirPath(), request.getFileName());
 
@@ -127,6 +131,9 @@ public class DownloadTask {
             if (!isSuccessful()) {
                 Error error = new Error();
                 error.setServerError(true);
+                error.setServerErrorMessage(convertStreamToString(httpClient.getErrorStream()));
+                error.setHeaderFields(httpClient.getHeaderFields());
+                error.setResponseCode(responseCode);
                 response.setError(error);
                 return response;
             }
@@ -174,12 +181,10 @@ public class DownloadTask {
                 }
             }
 
-            RandomAccessFile randomAccess = new RandomAccessFile(file, "rw");
-            fileDescriptor = randomAccess.getFD();
-            outputStream = new BufferedOutputStream(new FileOutputStream(randomAccess.getFD()));
+            this.outputStream = FileDownloadRandomAccessFile.create(file);
 
             if (isResumeSupported && request.getDownloadedBytes() != 0) {
-                randomAccess.seek(request.getDownloadedBytes());
+                outputStream.seek(request.getDownloadedBytes());
             }
 
             if (request.getStatus() == Status.CANCELLED) {
@@ -204,13 +209,13 @@ public class DownloadTask {
 
                 sendProgress();
 
-                syncIfRequired(outputStream, fileDescriptor);
+                syncIfRequired(outputStream);
 
                 if (request.getStatus() == Status.CANCELLED) {
                     response.setCancelled(true);
                     return response;
                 } else if (request.getStatus() == Status.PAUSED) {
-                    sync(outputStream, fileDescriptor);
+                    sync(outputStream);
                     response.setPaused(true);
                     return response;
                 }
@@ -233,9 +238,10 @@ public class DownloadTask {
             }
             Error error = new Error();
             error.setConnectionError(true);
+            error.setConnectionException(e);
             response.setError(error);
         } finally {
-            closeAllSafely(outputStream, fileDescriptor);
+            closeAllSafely(outputStream);
         }
 
         return response;
@@ -304,8 +310,7 @@ public class DownloadTask {
 
     private void sendProgress() {
         if (request.getStatus() != Status.CANCELLED) {
-            if (request.getOnProgressListener() != null) {
-                ProgressHandler progressHandler = new ProgressHandler(request.getOnProgressListener());
+            if (progressHandler != null) {
                 progressHandler
                         .obtainMessage(Constants.UPDATE,
                                 new Progress(request.getDownloadedBytes(),
@@ -314,23 +319,22 @@ public class DownloadTask {
         }
     }
 
-    private void syncIfRequired(BufferedOutputStream outputStream, FileDescriptor fileDescriptor) throws IOException {
+    private void syncIfRequired(FileDownloadOutputStream outputStream) {
         final long currentBytes = request.getDownloadedBytes();
         final long currentTime = System.currentTimeMillis();
         final long bytesDelta = currentBytes - lastSyncBytes;
         final long timeDelta = currentTime - lastSyncTime;
         if (bytesDelta > MIN_BYTES_FOR_SYNC && timeDelta > TIME_GAP_FOR_SYNC) {
-            sync(outputStream, fileDescriptor);
+            sync(outputStream);
             lastSyncBytes = currentBytes;
             lastSyncTime = currentTime;
         }
     }
 
-    private void sync(BufferedOutputStream outputStream, FileDescriptor fileDescriptor) {
+    private void sync(FileDownloadOutputStream outputStream) {
         boolean success;
         try {
-            outputStream.flush();
-            fileDescriptor.sync();
+            outputStream.flushAndSync();
             success = true;
         } catch (IOException e) {
             success = false;
@@ -345,7 +349,7 @@ public class DownloadTask {
 
     }
 
-    private void closeAllSafely(BufferedOutputStream outputStream, FileDescriptor fileDescriptor) {
+    private void closeAllSafely(FileDownloadOutputStream outputStream) {
         if (httpClient != null) {
             try {
                 httpClient.close();
@@ -363,15 +367,8 @@ public class DownloadTask {
         try {
             if (outputStream != null) {
                 try {
-                    outputStream.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (fileDescriptor != null) {
-                try {
-                    fileDescriptor.sync();
-                } catch (SyncFailedException e) {
+                    sync(outputStream);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -383,6 +380,31 @@ public class DownloadTask {
                     e.printStackTrace();
                 }
         }
+    }
+
+    private String convertStreamToString(InputStream stream) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (stream != null) {
+            String line;
+            BufferedReader bufferedReader = null;
+            try {
+                bufferedReader = new BufferedReader(new InputStreamReader(stream));
+                while ((line = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(line);
+                }
+            } catch (IOException ignored) {
+
+            } finally {
+                try {
+                    if (bufferedReader != null) {
+                        bufferedReader.close();
+                    }
+                } catch (NullPointerException | IOException ignored) {
+
+                }
+            }
+        }
+        return stringBuilder.toString();
     }
 
 }

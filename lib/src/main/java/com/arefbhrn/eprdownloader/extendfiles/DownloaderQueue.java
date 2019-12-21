@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 /**
  * Written by "Aref Bahreini Nejad"
- * Version: 1.0.0
- * Date: 06/10/2018
+ * Version: 1.0.1
+ * Date: 21/12/2019
  */
 
 public class DownloaderQueue {
