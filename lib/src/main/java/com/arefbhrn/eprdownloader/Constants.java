@@ -27,7 +27,6 @@ public final class Constants {
         // no instance
     }
 
-    public static final int UPDATE = 0x01;
     public static final String RANGE = "Range";
     public static final String ETAG = "ETag";
     public static final String USER_AGENT = "User-Agent";

@@ -23,7 +23,6 @@ import com.arefbhrn.eprdownloader.Progress;
 import com.arefbhrn.eprdownloader.Response;
 import com.arefbhrn.eprdownloader.Status;
 import com.arefbhrn.eprdownloader.database.DownloadModel;
-import com.arefbhrn.eprdownloader.handler.ProgressHandler;
 import com.arefbhrn.eprdownloader.httpclient.HttpClient;
 import com.arefbhrn.eprdownloader.internal.stream.FileDownloadOutputStream;
 import com.arefbhrn.eprdownloader.internal.stream.FileDownloadRandomAccessFile;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
 
 /**
  * Created by amitshekhar on 13/11/17.
@@ -49,7 +47,6 @@ public class DownloadTask {
     private static final long TIME_GAP_FOR_SYNC = 2000;
     private static final long MIN_BYTES_FOR_SYNC = 65536;
     private final DownloadRequest request;
-    private ArrayList<ProgressHandler> progressHandlers = new ArrayList<>();
     private long lastSyncTime;
     private long lastSyncBytes;
     private InputStream inputStream;
@@ -82,13 +79,6 @@ public class DownloadTask {
         }
 
         try {
-
-            progressHandlers.clear();
-            for (final OnProgressListener onProgressListener : request.getOnProgressListeners()) {
-                if (onProgressListener != null) {
-                    progressHandlers.add(new ProgressHandler(onProgressListener));
-                }
-            }
 
             tempPath = Utils.getTempPath(request.getDirPath(), request.getFileName());
 
@@ -312,12 +302,10 @@ public class DownloadTask {
 
     private void sendProgress() {
         if (request.getStatus() != Status.CANCELLED) {
-            for (final ProgressHandler progressHandler : progressHandlers) {
-                if (progressHandler != null) {
-                    progressHandler
-                            .obtainMessage(Constants.UPDATE,
-                                    new Progress(request.getDownloadedBytes(),
-                                            totalBytes)).sendToTarget();
+            for (final OnProgressListener onProgressListener : request.getOnProgressListeners()) {
+                if (onProgressListener != null) {
+                    Progress progress = new Progress(request.getDownloadedBytes(), totalBytes);
+                    onProgressListener.onProgress(progress);
                 }
             }
         }

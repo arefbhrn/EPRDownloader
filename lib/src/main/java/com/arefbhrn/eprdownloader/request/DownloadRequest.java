@@ -208,27 +208,57 @@ public class DownloadRequest {
     }
 
     public DownloadRequest addOnDownloadListener(OnDownloadListener onDownloadListener) {
-        this.onDownloadListeners.add(onDownloadListener);
+        if (!this.onDownloadListeners.contains(onDownloadListener))
+            this.onDownloadListeners.add(onDownloadListener);
         return this;
     }
 
-    public DownloadRequest addOnStartOrResumeListener(OnStartOrResumeListener onStartOrResumeListeners) {
-        this.onStartOrResumeListeners.add(onStartOrResumeListeners);
+    public DownloadRequest addOnStartOrResumeListener(OnStartOrResumeListener onStartOrResumeListener) {
+        if (!this.onStartOrResumeListeners.contains(onStartOrResumeListener))
+            this.onStartOrResumeListeners.add(onStartOrResumeListener);
         return this;
     }
 
-    public DownloadRequest addOnProgressListener(OnProgressListener onProgressListeners) {
-        this.onProgressListeners.add(onProgressListeners);
+    public DownloadRequest addOnProgressListener(OnProgressListener onProgressListener) {
+        if (!this.onProgressListeners.contains(onProgressListener))
+            this.onProgressListeners.add(onProgressListener);
         return this;
     }
 
-    public DownloadRequest addOnPauseListener(OnPauseListener onPauseListeners) {
-        this.onPauseListeners.add(onPauseListeners);
+    public DownloadRequest addOnPauseListener(OnPauseListener onPauseListener) {
+        if (!this.onPauseListeners.contains(onPauseListener))
+            this.onPauseListeners.add(onPauseListener);
         return this;
     }
 
-    public DownloadRequest addOnCancelListener(OnCancelListener onCancelListeners) {
-        this.onCancelListeners.add(onCancelListeners);
+    public DownloadRequest addOnCancelListener(OnCancelListener onCancelListener) {
+        if (!this.onCancelListeners.contains(onCancelListener))
+            this.onCancelListeners.add(onCancelListener);
+        return this;
+    }
+
+    public DownloadRequest removeOnDownloadListener(OnDownloadListener onDownloadListener) {
+        this.onDownloadListeners.remove(onDownloadListener);
+        return this;
+    }
+
+    public DownloadRequest removeOnStartOrResumeListener(OnStartOrResumeListener onStartOrResumeListener) {
+        this.onStartOrResumeListeners.remove(onStartOrResumeListener);
+        return this;
+    }
+
+    public DownloadRequest removeOnProgressListener(OnProgressListener onProgressListener) {
+        this.onProgressListeners.remove(onProgressListener);
+        return this;
+    }
+
+    public DownloadRequest removeOnPauseListener(OnPauseListener onPauseListener) {
+        this.onPauseListeners.remove(onPauseListener);
+        return this;
+    }
+
+    public DownloadRequest removeOnCancelListener(OnCancelListener onCancelListener) {
+        this.onCancelListeners.remove(onCancelListener);
         return this;
     }
 
